@@ -14,7 +14,7 @@ function movimentaAtor(){
   // }
   // else if -de == DOWN_ARROW){
   //   yAtor += 2;
-  // }
+  // } --
   if (keyIsDown (UP_ARROW)){
     yAtor -= 3;
   }
