@@ -1,0 +1,32 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body { @apply bg-zinc-950 text-zinc-100 antialiased; }
+  * { @apply border-zinc-800; }
+}
+
+@layer components {
+  .card { @apply bg-zinc-900 border border-zinc-800 rounded-xl; }
+  .card-sm { @apply bg-zinc-900 border border-zinc-800 rounded-lg; }
+  .input { @apply bg-zinc-800 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-zinc-100 placeholder-zinc-500 focus:outline-none focus:ring-1 focus:ring-brand-500 w-full; }
+  .btn { @apply inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium border border-zinc-700 bg-transparent hover:bg-zinc-800 transition-colors cursor-pointer; }
+  .btn-primary { @apply bg-brand-500 border-brand-500 text-white hover:bg-brand-600; }
+  .btn-danger { @apply bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20; }
+  .badge { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium; }
+  .badge-buy  { @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/20; }
+  .badge-sell { @apply bg-red-500/10 text-red-400 border border-red-500/20; }
+  .badge-swap { @apply bg-blue-500/10 text-blue-400 border border-blue-500/20; }
+  .badge-defi { @apply bg-purple-500/10 text-purple-400 border border-purple-500/20; }
+  .badge-hold { @apply bg-zinc-500/10 text-zinc-400 border border-zinc-500/20; }
+  .up   { @apply text-emerald-400; }
+  .down { @apply text-red-400; }
+  .muted { @apply text-zinc-500; }
+  .nav-item { @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100 transition-colors cursor-pointer w-full border-0 bg-transparent; }
+  .nav-item.active { @apply bg-zinc-800 text-zinc-100 font-medium; }
+  th { @apply text-left text-xs font-medium text-zinc-500 px-4 py-3 bg-zinc-900/50 border-b border-zinc-800; }
+  td { @apply px-4 py-3 text-sm border-b border-zinc-800/50; }
+  tr:last-child td { @apply border-0; }
+  tr:hover td { @apply bg-zinc-800/30; }
+}
