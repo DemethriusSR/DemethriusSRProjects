@@ -23,14 +23,7 @@ try {
 const txns = [
   { date:'2024-01-10', type:'Compra', asset:'BTC', qty:0.05,   price:220000, fee:15, exchange:'Binance' },
   { date:'2024-02-14', type:'Compra', asset:'ETH', qty:0.8,    price:13000,  fee:8,  exchange:'Binance' },
-  { date:'2024-03-01', type:'Compra', asset:'SOL', qty:12,      price:600,    fee:3,  exchange:'Foxbit'  },
-  { date:'2024-04-05', type:'Compra', asset:'BNB', qty:2,       price:1800,   fee:4,  exchange:'Binance' },
-  { date:'2024-05-20', type:'Compra', asset:'BTC', qty:0.02,   price:340000, fee:12, exchange:'Binance' },
-  { date:'2024-06-10', type:'Venda',  asset:'SOL', qty:4,       price:780,    fee:5,  exchange:'Foxbit'  },
-  { date:'2024-07-15', type:'Compra', asset:'LINK',qty:50,      price:65,     fee:4,  exchange:'Coinbase'},
-  { date:'2024-08-22', type:'Swap',   asset:'ADA', qty:3000,    price:2.5,    fee:2,  exchange:'Binance', origin_asset:'BNB', origin_qty:1 },
-  { date:'2024-09-30', type:'Compra', asset:'POL',qty:500,    price:3.1,    fee:2,  exchange:'Binance' },
-  { date:'2024-10-12', type:'Compra', asset:'ETH', qty:0.3,    price:16000,  fee:6,  exchange:'Binance' },
+  { date:'2024-03-01', type:'Compra', asset:'SOL', qty:12,      price:600,    fee:3,  exchange:'Foxbit'  }
 ];
 
 const insert = db.prepare(`
