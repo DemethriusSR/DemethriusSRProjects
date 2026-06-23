@@ -4,12 +4,12 @@ import api from './services/api'
 // ── Preferências ──────────────────────────────────────────────────────────────
 export const usePrefsStore = create((set) => ({
   currency: localStorage.getItem('ct_currency') || 'BRL',
-  btcUnit:  localStorage.getItem('ct_btcUnit')  || 'BTC',
-  usdRate:  parseFloat(localStorage.getItem('ct_usdRate') || '0'), // persiste entre sessões
+  btcUnit: localStorage.getItem('ct_btcUnit') || 'BTC',
+  usdRate: parseFloat(localStorage.getItem('ct_usdRate') || '0'), // persiste entre sessões
 
   setCurrency: (v) => { localStorage.setItem('ct_currency', v); set({ currency: v }) },
-  setBtcUnit:  (v) => { localStorage.setItem('ct_btcUnit',  v); set({ btcUnit: v  }) },
-  setUsdRate:  (v) => {
+  setBtcUnit: (v) => { localStorage.setItem('ct_btcUnit', v); set({ btcUnit: v }) },
+  setUsdRate: (v) => {
     if (v && v > 0) {
       localStorage.setItem('ct_usdRate', String(v));
       set({ usdRate: v });
@@ -19,7 +19,7 @@ export const usePrefsStore = create((set) => ({
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 export const useAuthStore = create((set) => ({
-  user:  JSON.parse(localStorage.getItem('ct_user') || 'null'),
+  user: JSON.parse(localStorage.getItem('ct_user') || 'null'),
   token: localStorage.getItem('ct_token'),
 
   login: async (email, password) => {
@@ -96,6 +96,26 @@ export const usePortfolioStore = create((set, get) => ({
     await get().fetchTransactions()
   },
 
+  deleteTransactionsBulk: async (ids) => {
+
+    await api.delete('/transactions/bulk',
+      {
+        data: { ids }
+      }
+    );
+
+    const state = get();
+
+    set({
+      transactions:
+        state.transactions.filter(
+          t => !ids.includes(t.id)
+        )
+    });
+
+    await get().fetchSummary();
+  },
+
   fetchDefi: async () => {
     const { data } = await api.get('/defi')
     set({ defi: data })
@@ -110,6 +130,18 @@ export const usePortfolioStore = create((set, get) => ({
   closeDefi: async (id, exit_date, withdrawn) => {
     await api.patch(`/defi/${id}/close`, { exit_date, withdrawn })
     await get().fetchDefi()
+  },
+
+  deleteDefiBulk: async (ids) => {
+
+    await api.delete(
+      '/defi/bulk',
+      {
+        data: { ids }
+      }
+    );
+
+    await get().fetchDefi();
   },
 
   deleteDefi: async (id) => {

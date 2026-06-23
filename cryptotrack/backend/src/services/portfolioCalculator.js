@@ -1,48 +1,73 @@
-function calcPortfolio(txns, prices, usdBrl = 5.5) {
+function calcPortfolio(txns, prices, usdBrl = 5.7) {
   const holdings = {};
 
   for (const t of txns) {
-    const asset = t.asset;
+    const asset = t.asset?.toUpperCase();
+
+    if (!asset) continue;
 
     if (!holdings[asset]) {
       holdings[asset] = {
         qty: 0,
-        costBasis: 0,
-        sold: 0,
-        saleRevenue: 0
+        costBasis: 0
       };
     }
 
     const h = holdings[asset];
 
-    const priceBrl = t.currency === 'USD' ? t.price * usdBrl : t.price;
-    const totalBrl = t.currency === 'USD' ? t.total * usdBrl : t.total;
-    const feeBrl = t.currency === 'USD' ? (t.fee || 0) * usdBrl : (t.fee || 0);
+    const qty = Number(t.qty || 0);
+    const total = Number(t.total || 0);
+    const fee = Number(t.fee || 0);
 
-    if (t.type === 'Compra') {
-      h.qty += t.qty;
-      h.costBasis += totalBrl + feeBrl;
-    }
+    switch (t.type) {
 
-    if (t.type === 'Venda') {
-      const avg = h.qty ? h.costBasis / h.qty : 0;
-      h.qty -= t.qty;
-      h.costBasis -= avg * t.qty;
-      h.saleRevenue += totalBrl - feeBrl;
-    }
+      case 'Compra':
+        h.qty += qty;
+        h.costBasis += total + fee;
+        break;
 
-    if (t.type === 'Swap') {
-      const origin = t.origin_asset;
-      if (origin && holdings[origin]) {
-        const o = holdings[origin];
-        const avg = o.qty ? o.costBasis / o.qty : 0;
-        const costMoved = avg * (t.origin_qty || 0);
+      case 'Venda': {
+        const avgCost =
+          h.qty > 0
+            ? h.costBasis / h.qty
+            : 0;
 
-        o.qty -= t.origin_qty || 0;
-        o.costBasis -= costMoved;
+        h.qty -= qty;
+        h.costBasis -= avgCost * qty;
 
-        h.qty += t.qty;
-        h.costBasis += costMoved;
+        if (h.qty < 0) {
+          h.qty = 0;
+          h.costBasis = 0;
+        }
+        break;
+      }
+
+      case 'Swap': {
+
+        const originAsset = t.origin_asset?.toUpperCase();
+
+        if (
+          originAsset &&
+          holdings[originAsset]
+        ) {
+          const origin = holdings[originAsset];
+
+          const avg =
+            origin.qty > 0
+              ? origin.costBasis / origin.qty
+              : 0;
+
+          const movedCost =
+            avg * Number(t.origin_qty || 0);
+
+          origin.qty -= Number(t.origin_qty || 0);
+          origin.costBasis -= movedCost;
+
+          h.qty += qty;
+          h.costBasis += movedCost;
+        }
+
+        break;
       }
     }
   }
@@ -50,35 +75,75 @@ function calcPortfolio(txns, prices, usdBrl = 5.5) {
   const portfolio = [];
 
   for (const [symbol, h] of Object.entries(holdings)) {
+
     if (h.qty <= 0) continue;
 
-    const p = prices[symbol];
+    const market = prices?.data?.[symbol];
 
-    const priceBrl = Number.isFinite(p?.priceBrl) ? p.priceBrl : 0;
-    const priceUsd = Number.isFinite(p?.priceUsd) ? p.priceUsd : 0;
+    const currentPrice =
+      Number(market?.priceBrl || 0);
 
-    const currentValue = h.qty * priceBrl;
-    const pl = currentValue - h.costBasis;
+    const currentPriceUsd =
+      Number(market?.priceUsd || 0);
+
+    const currentValue =
+      h.qty * currentPrice;
+
+    const currentValueUsd =
+      h.qty * currentPriceUsd;
+
+    const avgCost =
+      h.qty > 0
+        ? h.costBasis / h.qty
+        : 0;
+
+    const avgCostUsd =
+      avgCost / usdBrl;
+
+    const pl =
+      currentValue - h.costBasis;
+
+    const plUsd =
+      currentValueUsd -
+      (h.costBasis / usdBrl);
+
+    const roi =
+      h.costBasis > 0
+        ? (pl / h.costBasis) * 100
+        : 0;
 
     portfolio.push({
       symbol,
+
       qty: h.qty,
 
       costBasis: h.costBasis,
-      avgCost: h.qty ? h.costBasis / h.qty : 0,
+      costBasisUsd: h.costBasis / usdBrl,
 
-      currentPrice: priceBrl,
-      currentPriceUsd: priceUsd,
+      avgCost,
+      avgCostUsd,
+
+      currentPrice,
+      currentPriceUsd,
 
       currentValue,
-      currentValueUsd: priceUsd * h.qty,
+      currentValueUsd,
 
       pl,
-      roi: h.costBasis ? (pl / h.costBasis) * 100 : 0
+      plUsd,
+
+      roi
     });
   }
+
+  portfolio.sort(
+    (a, b) =>
+      b.currentValue - a.currentValue
+  );
 
   return portfolio;
 }
 
-module.exports = { calcPortfolio };
+module.exports = {
+  calcPortfolio
+};

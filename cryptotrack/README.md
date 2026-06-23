@@ -68,7 +68,7 @@ cryptotrack/
 cd cryptotrack
 
 # 2. Suba tudo com um comando
-docker-compose up -d --build
+docker compose up -d --build
 
 # Acesse:
 # Frontend → http://localhost:3000
@@ -78,13 +78,13 @@ docker-compose up -d --build
 
 Para parar:
 ```bash
-docker-compose down
+docker compose down
 ```
 
 Para ver logs:
 ```bash
-docker-compose logs -f backend
-docker-compose logs -f frontend
+docker compose logs -f backend
+docker compose logs -f frontend
 ```
 
 ---

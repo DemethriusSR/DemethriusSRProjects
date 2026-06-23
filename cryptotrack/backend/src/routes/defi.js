@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
   `).all(req.user.id);
 
   const totalDeposited = rows.filter(r => !r.exit_date).reduce((a, b) => a + b.deposited, 0);
-  const totalRewards   = rows.reduce((a, b) => a + (b.rewards || 0), 0);
+  const totalRewards = rows.reduce((a, b) => a + (b.rewards || 0), 0);
 
   res.json({ data: rows, totalDeposited, totalRewards });
 });
@@ -69,6 +69,52 @@ router.patch('/:id/close',
     res.json(db.prepare('SELECT * FROM defi_positions WHERE id = ?').get(req.params.id));
   }
 );
+
+/*
+=========================================
+DELETE BULK
+=========================================
+*/
+router.delete('/bulk', async (req, res) => {
+
+  const { ids } = req.body;
+
+  if (
+    !Array.isArray(ids) ||
+    ids.length === 0
+  ) {
+    return res.status(400).json({
+      error: 'Nenhuma posição selecionada'
+    });
+  }
+
+  const validIds = ids
+    .map(Number)
+    .filter(Number.isInteger);
+
+  if (!validIds.length) {
+    return res.status(400).json({
+      error: 'IDs inválidos'
+    });
+  }
+
+  const placeholders =
+    validIds.map(() => '?').join(',');
+
+  const result = db.prepare(`
+    DELETE FROM defi_positions
+    WHERE user_id = ?
+    AND id IN (${placeholders})
+  `).run(
+    req.user.id,
+    ...validIds
+  );
+
+  res.json({
+    ok: true,
+    deleted: result.changes
+  });
+});
 
 router.delete('/:id', param('id').isInt(), async (req, res) => {
   const result = db.prepare('DELETE FROM defi_positions WHERE id = ? AND user_id = ?').run(req.params.id, req.user.id);

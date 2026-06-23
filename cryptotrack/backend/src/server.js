@@ -7,7 +7,7 @@ const cron = require('node-cron');
 const { getPrices } = require('./services/priceEngine');
 const { initDatabase } = require('./bootstrap');
 
-//initDatabase();
+initDatabase();
 
 const app = express();
 const PORT = process.env.PORT || 3001;

@@ -2,79 +2,110 @@ const router = require('express').Router();
 const db = require('../db/database');
 const { requireAuth } = require('../middleware/auth');
 const { getPrices } = require('../services/priceEngine');
+const { calcPortfolio } = require('../services/portfolioCalculator');
 
 router.use(requireAuth);
+router.get('/summary', async (req, res) => {
 
-function calcPortfolio(txns, prices, usdBrl) {
-  const holdings = {};
+  try {
 
-  for (const t of txns) {
-    if (!t.asset || !t.qty) continue; // validação crítica
+    const prices =
+      await getPrices(true);
 
-    const s = t.asset;
+    const usdBrl =
+      prices?.__rate?.usdBrl || 5.7;
 
-    if (!holdings[s]) {
-      holdings[s] = { qty: 0, cost: 0 };
-    }
+    const txns = db.prepare(`
+      SELECT *
+      FROM transactions
+      WHERE user_id = ?
+      ORDER BY date ASC
+    `).all(req.user.id);
 
-    const h = holdings[s];
+    const portfolio =
+      calcPortfolio(
+        txns,
+        prices,
+        usdBrl
+      );
 
-    const totalBrl = t.total || 0;
-    const fee = t.fee || 0;
+    const totalInvested =
+      portfolio.reduce(
+        (acc, p) =>
+          acc + p.costBasis,
+        0
+      );
 
-    if (t.type === 'Compra') {
-      h.qty += t.qty;
-      h.cost += totalBrl + fee;
-    }
+    const totalInvestedUsd =
+      portfolio.reduce(
+        (acc, p) =>
+          acc + p.costBasisUsd,
+        0
+      );
 
-    if (t.type === 'Venda') {
-      const avg = h.qty ? h.cost / h.qty : 0;
-      h.qty -= t.qty;
-      h.cost -= avg * t.qty;
-    }
-  }
+    const totalValue =
+      portfolio.reduce(
+        (acc, p) =>
+          acc + p.currentValue,
+        0
+      );
 
-  const portfolio = [];
+    const totalValueUsd =
+      portfolio.reduce(
+        (acc, p) =>
+          acc + p.currentValueUsd,
+        0
+      );
 
-  for (const [symbol, h] of Object.entries(holdings)) {
-    if (h.qty <= 0) continue;
+    const totalPL =
+      totalValue -
+      totalInvested;
 
-    const price = prices.data?.[symbol];
-    const priceBrl = price?.priceBrl || 0;
+    const totalPlUsd =
+      totalValueUsd -
+      totalInvestedUsd;
 
-    const value = h.qty * priceBrl;
+    const totalROI =
+      totalInvested > 0
+        ? (
+          totalPL /
+          totalInvested
+        ) * 100
+        : 0;
 
-    portfolio.push({
-      symbol,
-      qty: h.qty,
-      cost: h.cost,
-      value,
-      pl: value - h.cost,
-      roi: h.cost ? ((value - h.cost) / h.cost) * 100 : 0
+    res.json({
+
+      usdBrl,
+
+      totalInvested,
+      totalInvestedUsd,
+
+      totalValue,
+      totalValueUsd,
+
+      totalPL,
+      totalPlUsd,
+
+      totalROI,
+
+      transactionCount:
+        txns.length,
+
+      assetsCount:
+        portfolio.length,
+
+      portfolio
+    });
+
+  } catch (err) {
+
+    console.error(err);
+
+    res.status(500).json({
+      error:
+        'Erro ao calcular portfólio'
     });
   }
-
-  return portfolio;
-}
-
-router.get('/summary', async (req, res) => {
-  const prices = await getPrices(true);
-
-  const txns = db.prepare(`
-    SELECT * FROM transactions WHERE user_id=?
-  `).all(req.user.id);
-
-  const portfolio = calcPortfolio(txns, prices);
-
-  const total = portfolio.reduce((a, b) => a + b.value, 0);
-  const invested = portfolio.reduce((a, b) => a + b.cost, 0);
-
-  res.json({
-    totalInvested: invested,
-    totalValue: total,
-    roi: invested ? ((total - invested) / invested) * 100 : 0,
-    portfolio
-  });
 });
 
 module.exports = router;

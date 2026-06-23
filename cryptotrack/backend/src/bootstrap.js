@@ -1,17 +1,33 @@
 const db = require('./db/database');
-const { runSeeds } = require('./db/seed')
+const { runSeeds } = require('./db/seed');
 
 function initDatabase() {
-  const hasTables = db.prepare(`
-    SELECT name FROM sqlite_master WHERE type='table' AND name='transactions'
-  `).get();
 
-  if (!hasTables) {
-    console.log('🌱 Rodando seeds iniciais...');
+  const userCount =
+    db.prepare(`
+      SELECT COUNT(*) AS total
+      FROM users
+    `).get();
+
+  if (
+    !userCount ||
+    userCount.total === 0
+  ) {
+
+    console.log(
+      '🌱 Executando seed inicial...'
+    );
+
     runSeeds();
+
   } else {
-    console.log('📦 Banco já inicializado');
+
+    console.log(
+      '📦 Banco já inicializado'
+    );
   }
 }
 
-module.exports = { initDatabase };
+module.exports = {
+  initDatabase
+};
