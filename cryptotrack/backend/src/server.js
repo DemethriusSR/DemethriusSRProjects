@@ -32,8 +32,10 @@ app.use((err, req, res, _next) => {
   res.status(500).json({ error: 'Erro interno do servidor' });
 });
 
+// force=true é necessário: com force=false a função só lê o cache (getCached())
+// e nunca busca preços/taxa novos, deixando tudo "congelado" no valor do boot.
 cron.schedule('*/3 * * * *', async () => {
-  try { await getPrices(false); } catch {}
+  try { await getPrices(true); } catch (e) { console.error('Erro no refresh agendado de preços:', e.message); }
 });
 
 app.listen(PORT, () => {

@@ -4,7 +4,7 @@ if (!process.env.JWT_SECRET) {
 }
 const SECRET = process.env.JWT_SECRET;
 function signToken(payload) {
-  return jwt.sign(payload, SECRET, { expiresIn: "5m" });
+  return jwt.sign(payload, SECRET, { expiresIn: "1h" });
 }
 function requireAuth(req, res, next) {
   const header = req.headers.authorization;

@@ -1,6 +1,24 @@
 import * as XLSX from 'xlsx'
 import api from './api'
 
+// ── BACKUP DO BANCO ─────────────────────────────────────
+export async function downloadDatabaseBackup() {
+  const response = await api.get('/export/backup', { responseType: 'blob' })
+
+  const blob = new Blob([response.data], { type: 'application/octet-stream' })
+  const url = URL.createObjectURL(blob)
+
+  const filename = `cryptotrack-backup-${new Date().toISOString().split('T')[0]}.db`
+
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
+}
+
 // ── EXPORT ──────────────────────────────────────────────
 export async function exportTransactionsXLSX() {
   const { data } = await api.get('/export/transactions')
@@ -148,8 +166,15 @@ export function parseXLSXFile(file) {
   })
 }
 
-export async function importXLSXToServer(file) {
+export async function importXLSXToServer(file, confirm = false) {
   const rows = await parseXLSXFile(file)
-  const { data } = await api.post('/export/transactions', { rows })
+  const { data } = await api.post('/export/transactions', { rows, confirm })
+  return { ...data, rows }
+}
+
+// Reenvia as mesmas linhas já parseadas (usado após o usuário confirmar
+// a importação mesmo havendo duplicatas), sem precisar reler o arquivo.
+export async function confirmImportToServer(rows) {
+  const { data } = await api.post('/export/transactions', { rows, confirm: true })
   return data
 }

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react'
 import { useAuthStore, usePortfolioStore, usePrefsStore } from '../store'
-import { exportTransactionsXLSX, importXLSXToServer, downloadImportTemplate } from '../services/xlsx'
-import { CurrencySwap } from '../components/ui'
+import { exportTransactionsXLSX, importXLSXToServer, confirmImportToServer, downloadImportTemplate, downloadDatabaseBackup } from '../services/xlsx'
+import { CurrencySwap, Modal } from '../components/ui'
 
 function Section({ title, children }) {
   return (
@@ -46,23 +46,50 @@ export default function Settings() {
   const [exporting, setExporting]       = useState(false)
   const [importResult, setImportResult] = useState(null)
   const [refreshing, setRefreshing]     = useState(false)
+  const [backingUp, setBackingUp]       = useState(false)
+  const [dupConfirm, setDupConfirm]     = useState(null) // { rows, duplicatesCount, totalRows, duplicates }
 
   async function handleExport() {
     setExporting(true)
     try { await exportTransactionsXLSX() } catch { alert('Erro ao exportar') } finally { setExporting(false) }
   }
+
   async function handleImport(e) {
     const file = e.target.files[0]; if (!file) return
     setImporting(true); setImportResult(null)
     try {
       const result = await importXLSXToServer(file)
-      setImportResult(result)
-      await fetchTransactions(); await fetchSummary()
+      if (result.needsConfirmation) {
+        // Não importou nada ainda — guarda os rows já parseados para
+        // reenviar com confirm=true caso o usuário confirme no modal.
+        setDupConfirm(result)
+      } else {
+        setImportResult(result)
+        await fetchTransactions(); await fetchSummary()
+      }
     } catch { alert('Erro ao importar arquivo. Verifique o formato.') }
     finally { setImporting(false); e.target.value = '' }
   }
+
+  async function handleConfirmImportWithDuplicates() {
+    if (!dupConfirm) return
+    setImporting(true)
+    try {
+      const result = await confirmImportToServer(dupConfirm.rows)
+      setImportResult(result)
+      setDupConfirm(null)
+      await fetchTransactions(); await fetchSummary()
+    } catch { alert('Erro ao importar arquivo.') }
+    finally { setImporting(false) }
+  }
+
   async function handleRefreshPrices() {
     setRefreshing(true); await fetchPrices(true); setRefreshing(false)
+  }
+
+  async function handleBackup() {
+    setBackingUp(true)
+    try { await downloadDatabaseBackup() } catch { alert('Erro ao gerar backup') } finally { setBackingUp(false) }
   }
 
   const statusColor = { live:'text-emerald-400', loading:'text-amber-400', error:'text-red-400', idle:'text-zinc-500' }
@@ -86,7 +113,7 @@ export default function Settings() {
           label="Moeda de exibição"
           desc={
             rate
-              ? `Taxa de câmbio atual: 1 USD = R$ ${rate.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (via CoinGecko)`
+              ? `Taxa de câmbio atual: 1 USD = R$ ${rate.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} (via Banco Central)`
               : 'Taxa sendo carregada... acesse Preços para atualizar'
           }
         >
@@ -143,6 +170,15 @@ export default function Settings() {
         )}
       </Section>
 
+      <Section title="Backup">
+        <Row label="Backup do banco de dados" desc="Baixa uma cópia completa do banco (.db) para guardar em local seguro">
+          <button className="btn" onClick={handleBackup} disabled={backingUp}>
+            <i className={`ti ${backingUp ? 'ti-loader-2 animate-spin' : 'ti-database-export'}`} />
+            {backingUp ? 'Gerando...' : 'Baixar backup'}
+          </button>
+        </Row>
+      </Section>
+
       <Section title="Cotações">
         <Row label="Status CoinGecko" desc="Preços em BRL e USD atualizados a cada 60 segundos">
           <span className={`text-sm font-medium ${statusColor[priceStatus]}`}>
@@ -160,10 +196,63 @@ export default function Settings() {
         <Row label="CryptoTrack" desc="React + Node.js + SQLite · preços via CoinGecko">
           <span className="text-xs text-zinc-600">v1.0.0</span>
         </Row>
-        <Row label="Fonte de câmbio" desc="Taxa USD/BRL calculada via preço do USDT na CoinGecko">
-          <a href="https://www.coingecko.com" target="_blank" rel="noreferrer" className="text-xs text-brand-500 hover:underline">coingecko.com</a>
+        <Row label="Fonte de câmbio" desc="Taxa USD/BRL oficial obtida via API do Banco Central (PTAX)">
+          <a href="https://www.bcb.gov.br" target="_blank" rel="noreferrer" className="text-xs text-brand-500 hover:underline">bcb.gov.br</a>
         </Row>
       </Section>
+
+      {dupConfirm && (
+        <Modal title="Transações duplicadas encontradas" onClose={() => setDupConfirm(null)} width="520px">
+          <div className="space-y-4">
+            <p className="text-sm text-zinc-400">
+              Encontramos <span className="font-semibold text-amber-400">{dupConfirm.duplicatesCount}</span> de{' '}
+              <span className="font-semibold text-zinc-200">{dupConfirm.totalRows}</span> linha(s) com a mesma
+              combinação de <span className="font-mono text-zinc-300">Data + Ativo + Quantidade + Preço</span> já
+              existente no seu histórico.
+            </p>
+
+            <div className="max-h-48 overflow-y-auto rounded-lg border border-zinc-800">
+              <table className="w-full text-xs">
+                <thead className="bg-zinc-800/50">
+                  <tr>
+                    <th className="text-left p-2">Data</th>
+                    <th className="text-left p-2">Ativo</th>
+                    <th className="text-left p-2">Qtd.</th>
+                    <th className="text-left p-2">Preço</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {dupConfirm.duplicates.map((d, i) => (
+                    <tr key={i} className="border-t border-zinc-800/50">
+                      <td className="p-2 muted">{d.date}</td>
+                      <td className="p-2">{d.asset}</td>
+                      <td className="p-2 font-mono">{d.qty}</td>
+                      <td className="p-2 font-mono">{d.price}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {dupConfirm.duplicatesCount > dupConfirm.duplicates.length && (
+              <p className="text-xs text-zinc-500">
+                Mostrando {dupConfirm.duplicates.length} de {dupConfirm.duplicatesCount} duplicatas.
+              </p>
+            )}
+
+            <p className="text-sm text-zinc-400">
+              Deseja importar mesmo assim? Isso vai <span className="font-medium text-zinc-200">duplicar</span> essas
+              transações no seu histórico.
+            </p>
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button className="btn" onClick={() => setDupConfirm(null)}>Cancelar</button>
+              <button className="btn btn-danger" onClick={handleConfirmImportWithDuplicates} disabled={importing}>
+                {importing ? <><i className="ti ti-loader-2 animate-spin" /> Importando...</> : 'Importar mesmo assim'}
+              </button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </div>
   )
 }

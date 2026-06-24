@@ -8,6 +8,7 @@ import {
   fmt,
   Spinner,
   Empty,
+  ConfirmDialog,
 } from "../components/ui";
 
 const today = () => new Date().toISOString().split("T")[0];
@@ -155,6 +156,8 @@ export default function DeFi() {
   const { fmtMoney, fmt: _fmt } = useFmt();
   const [modal, setModal] = useState(false);
   const [selected, setSelected] = useState([]);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   useEffect(() => {
     fetchDefi();
@@ -197,13 +200,14 @@ export default function DeFi() {
   }
 
   async function handleBulkDelete() {
-    if (!window.confirm(`Excluir ${selected.length} posições DeFi?`)) {
-      return;
+    setBulkDeleting(true);
+    try {
+      await deleteDefiBulk(selected);
+      setSelected([]);
+    } finally {
+      setBulkDeleting(false);
+      setConfirmBulkDelete(false);
     }
-
-    await deleteDefiBulk(selected);
-
-    setSelected([]);
   }
 
   return (
@@ -217,7 +221,7 @@ export default function DeFi() {
 
       {selected.length > 0 && (
         <div>
-          <button className="btn btn-danger" onClick={handleBulkDelete}>
+          <button className="btn btn-danger" onClick={() => setConfirmBulkDelete(true)}>
             <i className="ti ti-trash" />
             Excluir Selecionados ({selected.length})
           </button>
@@ -321,6 +325,17 @@ export default function DeFi() {
       </div>
 
       {modal && <DefiModal onClose={() => setModal(false)} />}
+
+      {confirmBulkDelete && (
+        <ConfirmDialog
+          title="Excluir posições DeFi"
+          message={`Tem certeza que deseja excluir ${selected.length} posição(ões) DeFi selecionada(s)? Essa ação não pode ser desfeita.`}
+          confirmLabel={`Excluir ${selected.length}`}
+          onConfirm={handleBulkDelete}
+          onCancel={() => setConfirmBulkDelete(false)}
+          loading={bulkDeleting}
+        />
+      )}
     </div>
   );
 }

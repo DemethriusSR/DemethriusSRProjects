@@ -7,6 +7,7 @@ import {
   fmt,
   Spinner,
   Empty,
+  ConfirmDialog,
 } from "../components/ui";
 import TransactionModal from "../components/TransactionModal";
 
@@ -28,6 +29,8 @@ export default function Transactions() {
   const [search, setSearch] = useState("");
   const [deleting, setDeleting] = useState(null);
   const [selected, setSelected] = useState([]);
+  const [confirmBulkDelete, setConfirmBulkDelete] = useState(false);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   useEffect(() => {
     fetchTransactions();
@@ -63,6 +66,18 @@ export default function Transactions() {
       await fetchTransactions();
     } finally {
       setDeleting(null);
+    }
+  }
+
+  async function handleBulkDelete() {
+    setBulkDeleting(true);
+    try {
+      await deleteTransactionsBulk(selected);
+      setSelected([]);
+      await fetchTransactions();
+    } finally {
+      setBulkDeleting(false);
+      setConfirmBulkDelete(false);
     }
   }
 
@@ -138,17 +153,7 @@ export default function Transactions() {
         {selected.length > 0 && (
           <button
             className="btn btn-danger"
-            onClick={async () => {
-              if (!confirm(`Excluir ${selected.length} registros?`)) {
-                return;
-              }
-
-              await deleteTransactionsBulk(selected);
-
-              setSelected([]);
-
-              await fetchTransactions();
-            }}
+            onClick={() => setConfirmBulkDelete(true)}
           >
             <i className="ti ti-trash" />
             Excluir Selecionados ({selected.length})
@@ -272,6 +277,17 @@ export default function Transactions() {
             setModal(false);
             fetchTransactions();
           }}
+        />
+      )}
+
+      {confirmBulkDelete && (
+        <ConfirmDialog
+          title="Excluir transações"
+          message={`Tem certeza que deseja excluir ${selected.length} transação(ões) selecionada(s)? Essa ação não pode ser desfeita.`}
+          confirmLabel={`Excluir ${selected.length}`}
+          onConfirm={handleBulkDelete}
+          onCancel={() => setConfirmBulkDelete(false)}
+          loading={bulkDeleting}
         />
       )}
     </div>

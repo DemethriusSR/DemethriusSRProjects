@@ -5,6 +5,34 @@ const { getPrices } = require('../services/priceEngine');
 const { calcPortfolio } = require('../services/portfolioCalculator');
 
 router.use(requireAuth);
+
+// O frontend (store.js / Prices.jsx) já consome esta rota via
+// GET /api/portfolio/prices?refresh=true — ela não existia antes,
+// o que causava 404 em todo fetchPrices() e exibia "Erro na API".
+router.get('/prices', async (req, res) => {
+  try {
+    const forceRefresh = req.query.refresh === 'true';
+
+    const prices = await getPrices(forceRefresh);
+
+    const result = {};
+    for (const [symbol, p] of Object.entries(prices.data || {})) {
+      result[symbol] = {
+        price: p.priceBrl,
+        priceUsd: p.priceUsd,
+        change24h: p.change24h ?? 0
+      };
+    }
+
+    result.__rate = prices.__rate || { usdBrl: 5.0 };
+
+    res.json(result);
+  } catch (err) {
+    console.error('Erro ao buscar cotações:', err);
+    res.status(500).json({ error: 'Erro ao buscar cotações' });
+  }
+});
+
 router.get('/summary', async (req, res) => {
 
   try {

@@ -175,3 +175,20 @@ export function Modal({ title, onClose, children, width = '480px' }) {
     </div>
   )
 }
+
+// ── ConfirmDialog — confirmação para ações destrutivas (ex: exclusão em massa) ─
+export function ConfirmDialog({ title = 'Confirmar ação', message, confirmLabel = 'Confirmar', onConfirm, onCancel, loading = false }) {
+  return (
+    <Modal title={title} onClose={onCancel} width="420px">
+      <div className="space-y-4">
+        <p className="text-sm text-zinc-400">{message}</p>
+        <div className="flex justify-end gap-2 pt-1">
+          <button className="btn" onClick={onCancel}>Cancelar</button>
+          <button className="btn btn-danger" onClick={onConfirm} disabled={loading}>
+            {loading ? <><i className="ti ti-loader-2 animate-spin" /> Excluindo...</> : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </Modal>
+  )
+}

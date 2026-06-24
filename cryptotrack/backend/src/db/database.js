@@ -94,3 +94,4 @@ CREATE INDEX IF NOT EXISTS idx_defi_user ON defi_positions(user_id);
 `);
 
 module.exports = db;
+module.exports.DB_PATH = DB_PATH;
