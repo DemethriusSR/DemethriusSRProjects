@@ -7,7 +7,7 @@ const COLORS = ['#F7931A','#627EEA','#F3BA2F','#9945FF','#0033AD','#E6007A','#E8
 
 export default function Portfolio() {
   const { summary, loading, fetchSummary, fetchPrices } = usePortfolioStore()
-  const { fmtMoney, fmtCoinPrice, fmtQty, btcUnit, currency } = useFmt()
+  const { fmtMoney, fmtCoinPriceFull, fmtQty, btcUnit, currency } = useFmt()
 
   useEffect(() => { fetchPrices(); fetchSummary() }, [])
 
@@ -100,8 +100,8 @@ export default function Portfolio() {
                     </div>
                   </td>
                   <td className="font-mono text-xs">{fmtQty(p.symbol, p.qty)}</td>
-                  <td className="font-mono text-xs">{fmtCoinPrice(p.symbol, p.currentPrice, p.currentPriceUsd)}</td>
-                  <td className="font-mono text-xs">{fmtCoinPrice(p.symbol, p.avgCost, p.avgCostUsd)}</td>
+                  <td className="font-mono text-xs">{fmtCoinPriceFull(p.currentPrice, p.currentPriceUsd)}</td>
+                  <td className="font-mono text-xs">{fmtCoinPriceFull(p.avgCost, p.avgCostUsd)}</td>
                   <td className="font-mono text-xs muted">{fmtMoney(p.costBasis, p.costBasisUsd)}</td>
                   <td className="font-mono text-xs">{fmtMoney(p.currentValue, p.currentValueUsd)}</td>
                   <td className={`font-mono text-xs ${p.pl >= 0 ? 'up' : 'down'}`}>

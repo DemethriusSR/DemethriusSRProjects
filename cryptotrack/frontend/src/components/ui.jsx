@@ -80,6 +80,17 @@ export function useFmt() {
     return fmtMoney(priceBrl, priceUsd)
   }
 
+  /**
+   * fmtCoinPriceFull(priceBrl, priceUsd?)
+   * Sempre mostra o preço por unidade inteira do ativo (ex: por 1 BTC),
+   * ignorando btcUnit. Usado em telas onde comparar preço atual x preço
+   * médio é mais legível em valor de mercado "cheio" do que por satoshi,
+   * mesmo que a quantidade do ativo esteja sendo exibida em sats.
+   */
+  function fmtCoinPriceFull(priceBrl, priceUsd) {
+    return fmtMoney(priceBrl, priceUsd)
+  }
+
   /** Formata quantidade genérica (BTC usa fmtBtc, resto usa decimais fixas) */
   function fmtQty(symbol, qty) {
     if (symbol === 'BTC') return fmtBtc(qty)
@@ -87,7 +98,7 @@ export function useFmt() {
   }
 
   return {
-    fmtMoney, fmtBtc, fmtCoinPrice, fmtQty,
+    fmtMoney, fmtBtc, fmtCoinPrice, fmtCoinPriceFull, fmtQty,
     currency, btcUnit, isUSD, rate,
     symbol: isUSD ? 'USD' : 'BRL',
     prefix: isUSD ? '$' : 'R$',
