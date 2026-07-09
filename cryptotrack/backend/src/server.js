@@ -25,6 +25,7 @@ app.use('/api/auth',        require('./routes/auth'));
 app.use('/api/transactions', require('./routes/transactions'));
 app.use('/api/portfolio',   require('./routes/portfolio'));
 app.use('/api/defi',        require('./routes/defi'));
+app.use('/api/transfers',   require('./routes/transfers'));
 app.use('/api/export',      require('./routes/export'));
 
 app.use((err, req, res, _next) => {

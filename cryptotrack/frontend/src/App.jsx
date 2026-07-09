@@ -4,6 +4,7 @@ import { useAuthStore } from './store'
 import Sidebar from './components/Sidebar'
 import Dashboard from './pages/Dashboard'
 import Transactions from './pages/Transactions'
+import Transfers from './pages/Transfers'
 import Portfolio from './pages/Portfolio'
 import DeFi from './pages/DeFi'
 import Prices from './pages/Prices'
@@ -31,6 +32,7 @@ export default function App() {
         <Route element={<PrivateLayout />}>
           <Route path="/"              element={<Dashboard />} />
           <Route path="/transactions"  element={<Transactions />} />
+          <Route path="/transfers"     element={<Transfers />} />
           <Route path="/portfolio"     element={<Portfolio />} />
           <Route path="/defi"          element={<DeFi />} />
           <Route path="/prices"        element={<Prices />} />

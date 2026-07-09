@@ -13,6 +13,20 @@ export const COINS = [
   'UNI','ATOM','LTC','DOGE','SHIB','USDT','USDC','TRX','TON','PEPE'
 ]
 
+// ── Hardwallets (HOT e COLD) ───────────────────────────────────────────────────
+export const HARDWALLETS = {
+  HOT: [
+    'MetaMask', 'Trust Wallet', 'Exodus', 'Coinbase Wallet',
+    'Phantom', 'Rainbow', 'Atomic Wallet', 'Binance Web3 Wallet',
+    'Electrum', 'Rabby Wallet'
+  ],
+  COLD: [
+    'Ledger Nano S Plus', 'Ledger Nano X', 'Trezor Model One',
+    'Trezor Model T', 'Trezor Safe 3', 'Trezor Safe 5',
+    'KeepKey', 'BitBox02', 'SafePal S1', 'Cypherock X1'
+  ]
+}
+
 // ── Helpers puros (sem contexto) ──────────────────────────────────────────────
 export function fmt(v, d = 2) {
   if (v == null || isNaN(v)) return '—'
@@ -159,6 +173,40 @@ export function CoinBadge({ symbol, size = 28 }) {
 export function TypeBadge({ type }) {
   const map = { Compra:'buy', Venda:'sell', Swap:'swap', DeFi:'defi', Hold:'hold' }
   return <span className={`badge badge-${map[type]||'hold'}`}>{type}</span>
+}
+
+export function WalletTypeBadge({ type }) {
+  const isHot = type === 'HOT'
+  return (
+    <span
+      className="badge border"
+      style={{
+        background: isHot ? '#E8414222' : '#2A5ADA22',
+        borderColor: isHot ? '#E8414244' : '#2A5ADA44',
+        color: isHot ? '#f87171' : '#60a5fa',
+      }}
+    >
+      <i className={`ti ${isHot ? 'ti-flame' : 'ti-snowflake'} text-xs mr-1`} />
+      {isHot ? 'HOT' : 'COLD'}
+    </span>
+  )
+}
+
+export function DirectionBadge({ direction }) {
+  const isIn = direction === 'Entrada'
+  return (
+    <span
+      className="badge border"
+      style={{
+        background: isIn ? '#1D9E7522' : '#E8414222',
+        borderColor: isIn ? '#1D9E7544' : '#E8414244',
+        color: isIn ? '#34d399' : '#f87171',
+      }}
+    >
+      <i className={`ti ${isIn ? 'ti-arrow-down-left' : 'ti-arrow-up-right'} text-xs mr-1`} />
+      {direction}
+    </span>
+  )
 }
 
 export function Spinner() {

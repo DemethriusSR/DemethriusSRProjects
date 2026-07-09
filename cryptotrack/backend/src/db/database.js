@@ -62,6 +62,22 @@ CREATE TABLE IF NOT EXISTS defi_positions (
   created_at TEXT DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS transfers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  date TEXT NOT NULL,
+  direction TEXT NOT NULL CHECK(direction IN ('Entrada','Saída')),
+  asset TEXT NOT NULL,
+  qty REAL NOT NULL DEFAULT 0,
+  wallet_type TEXT NOT NULL CHECK(wallet_type IN ('HOT','COLD')),
+  hardwallet TEXT NOT NULL,
+  counterparty TEXT,
+  fee REAL NOT NULL DEFAULT 0,
+  tx_hash TEXT,
+  obs TEXT,
+  created_at TEXT DEFAULT (datetime('now'))
+);
+
 /* ────────────────────────────────────────────────
  * PRICE CACHE (CORRIGIDO E PADRONIZADO)
  * ──────────────────────────────────────────────── */
@@ -91,6 +107,9 @@ VALUES (1, 5.70);
 CREATE INDEX IF NOT EXISTS idx_txn_user ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_txn_asset ON transactions(user_id, asset);
 CREATE INDEX IF NOT EXISTS idx_defi_user ON defi_positions(user_id);
+CREATE INDEX IF NOT EXISTS idx_transfers_user ON transfers(user_id);
+CREATE INDEX IF NOT EXISTS idx_transfers_asset ON transfers(user_id, asset);
+CREATE INDEX IF NOT EXISTS idx_transfers_hash ON transfers(user_id, tx_hash);
 `);
 
 module.exports = db;

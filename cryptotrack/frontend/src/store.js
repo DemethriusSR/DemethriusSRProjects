@@ -147,5 +147,41 @@ export const usePortfolioStore = create((set, get) => ({
   deleteDefi: async (id) => {
     await api.delete(`/defi/${id}`)
     await get().fetchDefi()
+  },
+
+  // ── Transferências ──────────────────────────────────────────────────────
+  transfers: [],
+
+  fetchTransfers: async (filters = {}) => {
+    const params = new URLSearchParams()
+    if (filters.asset) params.set('asset', filters.asset)
+    if (filters.tx_hash) params.set('tx_hash', filters.tx_hash)
+    const qs = params.toString()
+    const { data } = await api.get(`/transfers${qs ? `?${qs}` : ''}`)
+    set({ transfers: data.data })
+  },
+
+  addTransfer: async (payload) => {
+    const { data } = await api.post('/transfers', payload)
+    await get().fetchTransfers()
+    return data
+  },
+
+  deleteTransfer: async (id) => {
+    await api.delete(`/transfers/${id}`)
+    await get().fetchTransfers()
+  },
+
+  deleteTransfersBulk: async (ids) => {
+    await api.delete('/transfers/bulk', { data: { ids } })
+
+    const state = get();
+
+    set({
+      transfers:
+        state.transfers.filter(
+          t => !ids.includes(t.id)
+        )
+    });
   }
 }))

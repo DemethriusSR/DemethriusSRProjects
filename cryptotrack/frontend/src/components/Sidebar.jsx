@@ -6,6 +6,7 @@ import { CurrencySwap } from './ui'
 const links = [
   { to: '/',             icon: 'ti-layout-dashboard', label: 'Dashboard' },
   { to: '/transactions', icon: 'ti-arrows-exchange',   label: 'Transações' },
+  { to: '/transfers',    icon: 'ti-wallet',            label: 'Transferências' },
   { to: '/portfolio',    icon: 'ti-chart-pie',         label: 'Portfólio' },
   { to: '/defi',         icon: 'ti-atom',              label: 'DeFi' },
   { to: '/prices',       icon: 'ti-trending-up',       label: 'Preços' },
