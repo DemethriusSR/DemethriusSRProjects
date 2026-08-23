@@ -33,7 +33,7 @@ function runSeeds() {
         )
         VALUES (?, ?, ?)
       `).run(
-        'admin@admin.com',
+        'admin@localhost.com',
         'Administrador',
         hash
       );
